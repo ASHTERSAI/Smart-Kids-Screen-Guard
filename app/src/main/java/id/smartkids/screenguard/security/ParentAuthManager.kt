@@ -29,7 +29,7 @@ class ParentAuthManager(context: Context) {
             val spec = PBEKeySpec(secret.toCharArray(), salt, PBKDF2_ITERATIONS, KEY_LENGTH_BITS)
             val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
             val hash = factory.generateSecret(spec).encoded
-            return Base64.encodeToString(hash, Base64.NO_WRAP)
+            return Base64.getEncoder().encodeToString(hash)
         }
 
         fun constantTimeEquals(a: String, b: String): Boolean {
@@ -93,7 +93,7 @@ class ParentAuthManager(context: Context) {
     fun verifyPinOrPassword(secretInput: String, nowMillis: Long = System.currentTimeMillis()): Boolean {
         if (isLockedOut(nowMillis)) return false
         val saltBase64 = prefs.getString("salt", null) ?: return false
-        val salt = Base64.decode(saltBase64, Base64.NO_WRAP)
+        val salt = Base64.getDecoder().decode(saltBase64)
 
         val storedPassHash = prefs.getString("password_hash", null)?.let { decryptWithKeystore(it) } ?: return false
         val storedPinHash = prefs.getString("pin_hash", null)?.let { decryptWithKeystore(it) } ?: return false
