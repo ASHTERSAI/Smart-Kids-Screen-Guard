@@ -18,16 +18,26 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: "8.4"
+      - name: Download & Install Gradle with Auto-Retry
+        run: |
+          for i in {1..5}; do
+            echo "Percobaan $i mengunduh Gradle 8.4..."
+            if curl -fL --retry 3 --retry-delay 5 --connect-timeout 30 -o gradle-8.4-bin.zip https://services.gradle.org/distributions/gradle-8.4-bin.zip; then
+              echo "Berhasil mengunduh Gradle."
+              break
+            fi
+            echo "Gagal mengunduh, mencoba lagi dalam 5 detik..."
+            sleep 5
+          done
+          unzip -q gradle-8.4-bin.zip -d /opt
+          echo "/opt/gradle-8.4/bin" >> $GITHUB_PATH
 
       - name: Build Debug & Release APK
         run: gradle assembleDebug assembleRelease --stacktrace
 
       - name: Upload Compiled APKs
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: SmartKidsScreenGuard-APKs
           path: |
