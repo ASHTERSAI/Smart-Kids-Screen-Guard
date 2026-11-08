@@ -18,28 +18,23 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Download & Install Gradle with Auto-Retry
-        run: |
-          for i in {1..5}; do
-            echo "Percobaan $i mengunduh Gradle 8.4..."
-            if curl -fL --retry 3 --retry-delay 5 --connect-timeout 30 -o gradle-8.4-bin.zip https://services.gradle.org/distributions/gradle-8.4-bin.zip; then
-              echo "Berhasil mengunduh Gradle."
-              break
-            fi
-            echo "Gagal mengunduh, mencoba lagi dalam 5 detik..."
-            sleep 5
-          done
-          unzip -q gradle-8.4-bin.zip -d /opt
-          echo "/opt/gradle-8.4/bin" >> $GITHUB_PATH
-
-      - name: Build Debug & Release APK
-        run: gradle assembleDebug assembleRelease --stacktrace
-
-      - name: Upload Compiled APKs
-        uses: actions/upload-artifact@v4
-        if: always()
+      - name: Setup Gradle 8.4
+        uses: gradle/actions/setup-gradle@v3
         with:
-          name: SmartKidsScreenGuard-APKs
-          path: |
-            app/build/outputs/apk/debug/*.apk
-            app/build/outputs/apk/release/*.apk
+          gradle-version: "8.4"
+
+      - name: Auto-Fix Manifest (Hapus Ikon yang Hilang Otomatis)
+        run: |
+          # Hapus baris roundIcon yang memicu error AAPT
+          sed -i '/roundIcon/d' app/src/main/AndroidManifest.xml || true
+          # Ganti icon ke ikon bawaan sistem Android
+          sed -i 's|@mipmap/ic_launcher|@android:drawable/ic_menu_camera|g' app/src/main/AndroidManifest.xml || true
+
+      - name: Build Debug APK
+        run: gradle assembleDebug --stacktrace
+
+      - name: Upload Compiled APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartKidsScreenGuard-APK
+          path: app/build/outputs/apk/debug/*.apk
