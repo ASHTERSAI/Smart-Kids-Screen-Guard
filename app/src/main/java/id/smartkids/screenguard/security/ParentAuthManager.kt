@@ -3,7 +3,7 @@ package id.smartkids.screenguard.security
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import android.util.Base64
+import java.util.Base64
 import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.SecureRandom
